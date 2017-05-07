@@ -206,14 +206,14 @@ package GpioAgentPkg;
     GpioSetPinSequence _seq;
 
     if (_sqcr == null) begin
-      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL")
+      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
       return;
     end
 
     if (_op_type == WR_SYNC || _op_type == WR_ASYNC) begin
       _seq = GpioSetPinSequence::type_id::create("set_pin_seq");
     end else begin
-      `uvm_error("GPIO_PKG", "\nWrong OP for this setPin task")
+      `uvm_error("GPIO_PKG", "\nWrong OP for this setPin task\n")
       return;
     end
 
@@ -226,7 +226,7 @@ package GpioAgentPkg;
       foreach(_wr_data[i])
         gpio_out[i]     == _wr_data[i];
       duration          == _duration;
-    })) `uvm_error("GPIO_PKG", "\nRandomization failed");
+    })) `uvm_error("GPIO_PKG", "\nRandomization failed\n");
 
     `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Set OP:\n",
                              "-------------------------------------------------\n",
@@ -255,19 +255,19 @@ package GpioAgentPkg;
     GpioGetPinSequence _seq;
 
     if (_sqcr == null) begin
-      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL")
+      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
       return;
     end
 
     if (_pin_name_i.size() == 0 && _pin_name_o.size() == 0) begin
-      `uvm_error("GPIO_PKG", "\nNo input or output pins specified")
+      `uvm_error("GPIO_PKG", "\nNo input or output pins specified\n")
       return;
     end
 
     if (_op_type == RD_SYNC || _op_type == RD_ASYNC) begin
       _seq = GpioGetPinSequence::type_id::create("get_pin_seq");
     end else begin
-      `uvm_error("GPIO_PKG", "\nWrong OP for this getPin task")
+      `uvm_error("GPIO_PKG", "\nWrong OP for this getPin task\n")
       return;
     end
 
@@ -280,7 +280,7 @@ package GpioAgentPkg;
       foreach(_pin_name_o[i])
         pin_name_o[i]   == _pin_name_o[i];
       duration          == 1;
-    })) `uvm_error("GPIO_PKG", "\nRandomization failed");
+    })) `uvm_error("GPIO_PKG", "\nRandomization failed\n");
 
     _seq.start(_sqcr);
 
