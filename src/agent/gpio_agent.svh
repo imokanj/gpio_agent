@@ -46,12 +46,11 @@ endclass: GpioAgent
 
     //create agent components
     if (cfg.is_active == UVM_ACTIVE) begin
-      sqcr   = uvm_sequencer #(GpioItem)::type_id::create("sequencer", this);
-      drv    = GpioDriver               ::type_id::create(   "driver", this);
-      drv.mp           = cfg.vif;
-      drv.mp_async     = cfg.vif;
-      drv.mp_mon       = cfg.vif;
-      drv.mp_mon_async = cfg.vif;
+      sqcr       = uvm_sequencer #(GpioItem)::type_id::create("sequencer", this);
+      drv        = GpioDriver               ::type_id::create(   "driver", this);
+      drv.vif    = cfg.vif;
+      drv.mp_mas = cfg.vif;
+      drv.mp_mon = cfg.vif;
     end
 
     mon    = GpioMonitor::type_id::create("monitor", this);

@@ -26,20 +26,19 @@ endclass: GpioSetPinSequence
   task GpioSetPinSequence::body();
     super.body(); // create the transaction item
 
-    repeat (duration) begin
-      start_item(it);
-      void'(it.randomize() with {
-        pin_name_o.size() == local::pin_name_o.size();
-        foreach(local::pin_name_o[i])
-          pin_name_o[i]   == local::pin_name_o[i];
-        pin_name_i.size() == local::pin_name_i.size();
-        foreach(local::pin_name_i[i])
-          pin_name_i[i]   == local::pin_name_i[i];
-        gpio_out.size()   == local::gpio_out.size();
-        foreach(local::gpio_out[i])
-          gpio_out[i]     == local::gpio_out[i];
-        op_type           == local::op_type;
-      });
-      finish_item(it);
-    end
+    start_item(it);
+    if (!it.randomize() with {
+      pin_name_o.size() == local::pin_name_o.size();
+      foreach(local::pin_name_o[i])
+        pin_name_o[i]   == local::pin_name_o[i];
+      pin_name_i.size() == local::pin_name_i.size();
+      foreach(local::pin_name_i[i])
+        pin_name_i[i]   == local::pin_name_i[i];
+      gpio_out.size()   == local::gpio_out.size();
+      foreach(local::gpio_out[i])
+        gpio_out[i]     == local::gpio_out[i];
+      op_type           == local::op_type;
+      delay             == local::delay;
+    }) `uvm_error("GPIO_SET_SQNC", "\nRandomization failed\n");
+    finish_item(it);
   endtask: body

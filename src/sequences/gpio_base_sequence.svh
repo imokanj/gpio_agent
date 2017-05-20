@@ -17,7 +17,7 @@ class GpioBaseSequence extends uvm_sequence #(GpioItem);
   rand   logic         gpio_out   [];
   rand   gpio_input_t  pin_name_i [];
   rand   gpio_output_t pin_name_o [];
-  rand   bit [31:0]    duration;
+  rand   bit [31:0]    delay;
   rand   op_type_t     op_type;
 
   // Constructor

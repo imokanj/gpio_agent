@@ -20,7 +20,7 @@ interface GpioIf(
 // Ports
 //******************************************************************************
 
-  logic [1023:0] gpio_in;
+  wire  [1023:0] gpio_in;
   logic [1023:0] gpio_out;
 
 //******************************************************************************
@@ -34,13 +34,6 @@ interface GpioIf(
     output gpio_out;
   endclocking
 
-  // GPIO Slave clocking block
-  clocking cb_slave @(posedge clk);
-    default input #1step output #1step;
-    input  gpio_out;
-    output gpio_in;
-  endclocking
-
   // GPIO Monitor clocking block
   clocking cb_monitor @(posedge clk);
     default input #1step;
@@ -52,14 +45,9 @@ interface GpioIf(
 //******************************************************************************
 
   // GPIO Master modport
-  modport mp_master       (input clk, clocking cb_master);
-  modport mp_master_async (input clk, input gpio_in, output gpio_out);
-
-  // GPIO Slave modport
-  modport mp_slave  (input clk, clocking cb_slave);
+  modport mp_master (input clk, clocking cb_master);
 
   // GPIO Monitor modport
-  modport mp_monitor       (input clk, clocking cb_monitor);
-  modport mp_monitor_async (input clk, input gpio_in, input gpio_out);
+  modport mp_monitor(input clk, clocking cb_monitor);
 
 endinterface : GpioIf

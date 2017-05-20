@@ -10,10 +10,9 @@ class GpioDriver extends uvm_driver #(GpioItem);
   `uvm_component_utils(GpioDriver)
 
   // Components
-  virtual GpioIf.mp_master        mp;
-  virtual GpioIf.mp_master_async  mp_async;
-  virtual GpioIf.mp_monitor       mp_mon;
-  virtual GpioIf.mp_monitor_async mp_mon_async;
+  virtual GpioIf            vif;
+  virtual GpioIf.mp_master  mp_mas;
+  virtual GpioIf.mp_monitor mp_mon;
 
   // Constructor
   function new(string name = "GpioDriver", uvm_component parent);
@@ -22,9 +21,10 @@ class GpioDriver extends uvm_driver #(GpioItem);
 
   // Function/Task declarations
   extern virtual function void driveInit();
-  extern virtual task          driveGpioPins     (input GpioItem it, input bit is_sync);
-  extern virtual task          readGpioPins      (input GpioItem it, output GpioItem rsp, input bit is_sync);
-  extern virtual task          run_phase   (uvm_phase phase);
+  extern virtual task          driveGpioPins (input GpioItem it, input bit is_sync);
+  extern virtual task          driveGpioPinsW(input GpioItem it, input bit is_sync);
+  extern virtual task          readGpioPins  (input GpioItem it, output GpioItem rsp, input bit is_sync);
+  extern virtual task          run_phase     (uvm_phase phase);
 
 endclass: GpioDriver
 
@@ -33,7 +33,7 @@ endclass: GpioDriver
 //******************************************************************************
 
   function void GpioDriver::driveInit();
-    mp.cb_master.gpio_out <= gpio_out_init;
+    vif.gpio_out = gpio_out_init;
   endfunction: driveInit
 
   //----------------------------------------------------------------------------
@@ -41,17 +41,39 @@ endclass: GpioDriver
   task GpioDriver::driveGpioPins(input GpioItem it, input bit is_sync);
     // wait for clock only if synchronous write
     if (is_sync) begin
-      @mp.cb_master;
+      @mp_mas.cb_master;
     end
 
     foreach (it.pin_name_o[i]) begin
       if (is_sync) begin
-        mp.cb_master.gpio_out[it.pin_name_o[i]] <= it.gpio_out[i];
+        mp_mas.cb_master.gpio_out[it.pin_name_o[i]] <= it.gpio_out[i];
       end else begin
-        mp_async.gpio_out[it.pin_name_o[i]]     <= it.gpio_out[i];
+        vif.gpio_out[it.pin_name_o[i]]              <= it.gpio_out[i];
       end
     end
   endtask: driveGpioPins
+
+  //----------------------------------------------------------------------------
+
+  task GpioDriver::driveGpioPinsW(input GpioItem it, input bit is_sync);
+    if (is_sync) begin
+      @mp_mas.cb_master;
+      // add delay
+      repeat (it.delay) begin
+        @mp_mas.cb_master;
+      end
+    end else begin
+      #(it.delay * 1ns);
+    end
+
+    foreach (it.pin_name_o[i]) begin
+      if (is_sync) begin
+        mp_mas.cb_master.gpio_out[it.pin_name_o[i]] <= it.gpio_out[i];
+      end else begin
+        vif.gpio_out[it.pin_name_o[i]]              <= it.gpio_out[i];
+      end
+    end
+  endtask: driveGpioPinsW
 
   //----------------------------------------------------------------------------
 
@@ -69,7 +91,7 @@ endclass: GpioDriver
       if (is_sync) begin
         rsp.gpio_in[i] = mp_mon.cb_monitor.gpio_in[it.pin_name_i[i]];
       end else begin
-        rsp.gpio_in[i] = mp_mon_async.gpio_in[it.pin_name_i[i]];
+        rsp.gpio_in[i] = vif.gpio_in[it.pin_name_i[i]];
       end
     end
 
@@ -77,7 +99,7 @@ endclass: GpioDriver
       if (is_sync) begin
         rsp.gpio_out[i] = mp_mon.cb_monitor.gpio_out[it.pin_name_o[i]];
       end else begin
-        rsp.gpio_out[i] = mp_mon_async.gpio_out[it.pin_name_o[i]];
+        rsp.gpio_out[i] = vif.gpio_out[it.pin_name_o[i]];
       end
     end
 
@@ -95,10 +117,13 @@ endclass: GpioDriver
       rsp = null;
 
       case(it.op_type)
-        RD_SYNC:  readGpioPins (it, rsp, 1'b1);
-        RD_ASYNC: readGpioPins (it, rsp, 1'b0);
-        WR_SYNC:  driveGpioPins(it, 1'b1);
-        WR_ASYNC: driveGpioPins(it, 1'b0);
+        RD_SYNC      : readGpioPins (it, rsp, 1'b1);
+        RD_ASYNC     : readGpioPins (it, rsp, 1'b0);
+        WR_SYNC      : driveGpioPins(it, 1'b1);
+        WR_ASYNC     : driveGpioPins(it, 1'b0);
+        WR_WIN_SYNC  : begin fork driveGpioPinsW(it, 1'b1); join_none end
+        WR_WIN_ASYNC : begin fork driveGpioPinsW(it, 1'b0); join_none end
+        default      : `uvm_error("GPIO_DRV", "No such operation")
       endcase
 
       // get next transaction on rising clk edge

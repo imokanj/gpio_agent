@@ -56,7 +56,9 @@ package GpioAgentPkg;
     RD_SYNC,
     RD_ASYNC,
     WR_SYNC,
-    WR_ASYNC
+    WR_ASYNC,
+    WR_WIN_SYNC,
+    WR_WIN_ASYNC
   } op_type_t;
 
 //******************************************************************************
@@ -174,7 +176,7 @@ package GpioAgentPkg;
   //----------------------------------------------------------------------------
 
   function automatic string printPinVal(logic v []);
-    string    str    = "";
+    string    str = "";
     string    val;
     int       tmp;
 
@@ -196,25 +198,38 @@ package GpioAgentPkg;
 
   // write specified values to DUT inputs
   task automatic setPin(
+    input  bit                _print_info = 1'b1,
     input  uvm_sequencer_base _sqcr,
     input  op_type_t          _op_type,
     input  gpio_output_t      _pin_name_o [],
     input  logic              _wr_data    [],
-    input  bit [31:0]         _duration = 1
+    input  bit [31:0]         _delay = 0      // ignored for WR_SYNC and WR_ASYNC
   );
 
     GpioSetPinSequence _seq;
-
-    if (_sqcr == null) begin
-      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
-      return;
-    end
+    string             _delay_str;
 
     if (_op_type == WR_SYNC || _op_type == WR_ASYNC) begin
+      if (_sqcr == null) begin
+        `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+        return;
+      end
+    end
+
+    if (_op_type == WR_SYNC     || _op_type == WR_ASYNC ||
+        _op_type == WR_WIN_SYNC || _op_type == WR_WIN_ASYNC
+    ) begin
       _seq = GpioSetPinSequence::type_id::create("set_pin_seq");
     end else begin
       `uvm_error("GPIO_PKG", "\nWrong OP for this setPin task\n")
       return;
+    end
+
+    if (_op_type == WR_SYNC || _op_type == WR_ASYNC) begin
+      if (_pin_name_o.size() != _wr_data.size()) begin
+        `uvm_error("GPIO_PKG", "\nNumber of specified pin names is different than number of specified values\n")
+        return;
+      end
     end
 
     if (!(_seq.randomize() with {
@@ -225,17 +240,22 @@ package GpioAgentPkg;
       gpio_out.size()   == _wr_data.size();
       foreach(_wr_data[i])
         gpio_out[i]     == _wr_data[i];
-      duration          == _duration;
+      if (_op_type == WR_SYNC || _op_type == WR_ASYNC)
+        delay             == 0;
+      else
+        delay             == _delay;
     })) `uvm_error("GPIO_PKG", "\nRandomization failed\n");
 
-    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Set OP:\n",
-                             "-------------------------------------------------\n",
-                             "OP Type  : %s\n",
-                             "Pin Name : %s\n",
-                             "Pin Num  : %s\n",
-                             "Value    : %s\n"}
-                             , _op_type.name(), printPinEnumO(_pin_name_o, 0), printPinEnumO(_pin_name_o, 1), printPinVal(_wr_data)
-    ), UVM_LOW);
+    if (_print_info) begin
+      `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Set OP:\n",
+                               "-------------------------------------------------\n",
+                               "OP Type     : %s\n",
+                               "Pin Name    : %s\n",
+                               "Pin Num     : %s\n",
+                               "Value       : %s\n"}
+                               , _op_type.name(), printPinEnumO(_pin_name_o, 0), printPinEnumO(_pin_name_o, 1), printPinVal(_wr_data)
+      ), UVM_LOW);
+    end
 
     _seq.start(_sqcr);
 
@@ -243,8 +263,65 @@ package GpioAgentPkg;
 
   //----------------------------------------------------------------------------
 
+  // keep DUT input signals asserted to specified values for some duration, after an initial delay
+  task automatic setPinWindow(
+    input  bit                _print_info = 1'b1,
+    input  uvm_sequencer_base _sqcr,
+    input  op_type_t          _op_type,
+    input  gpio_output_t      _pin_name_o    [],
+    input  logic              _wr_data_start [],
+    input  logic              _wr_data_end   [],
+    input  bit [31:0]         _delay    = 0,
+    input  bit [31:0]         _duration = 0
+  );
+
+    if (_sqcr == null) begin
+      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+      return;
+    end
+
+    if (_op_type != WR_WIN_SYNC && _op_type != WR_WIN_SYNC) begin
+      `uvm_error("GPIO_PKG", "\nWrong OP for this setPinWindow task\n")
+      return;
+    end
+
+    if (_pin_name_o.size() != _wr_data_start.size() || _pin_name_o.size() != _wr_data_end.size()) begin
+      `uvm_error("GPIO_PKG", "\nNumber of specified pin names is different from number of specified values\n")
+      return;
+    end
+
+    if (_op_type == WR_WIN_ASYNC) begin
+      if (_duration == 0) begin
+        _duration = 1; // minimum duration for asynchronous window write is 1 ns
+      end
+    end
+
+    setPin(
+      ._print_info(1'b0),
+      ._sqcr      (_sqcr),
+      ._op_type   (_op_type),
+      ._pin_name_o(_pin_name_o),
+      ._wr_data   (_wr_data_start),
+      ._delay     (_delay)             // only affects synchronous writes
+    );
+
+    setPin(
+      ._print_info(1'b0),
+      ._sqcr      (_sqcr),
+      ._op_type   (_op_type),
+      ._pin_name_o(_pin_name_o),
+      ._wr_data   (_wr_data_end),
+      ._delay     (_delay + _duration) // only affects synchronous writes
+    );
+
+  endtask : setPinWindow
+
+
+  //----------------------------------------------------------------------------
+
   // read specified DUT pin values
   task automatic getPin(
+    input  bit                _print_info = 1'b1,
     input  uvm_sequencer_base _sqcr,
     input  op_type_t          _op_type,
     input  gpio_input_t       _pin_name_i [] = null,
@@ -279,7 +356,7 @@ package GpioAgentPkg;
       pin_name_o.size() == _pin_name_o.size();
       foreach(_pin_name_o[i])
         pin_name_o[i]   == _pin_name_o[i];
-      duration          == 1;
+      delay             == 0;
     })) `uvm_error("GPIO_PKG", "\nRandomization failed\n");
 
     _seq.start(_sqcr);
@@ -294,17 +371,53 @@ package GpioAgentPkg;
       _rd_data[i + _pin_name_i.size()] = _seq.rsp.gpio_out[i];
     end
 
-    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Get OP:\n",
-                             "-------------------------------------------------\n",
-                             "OP Type  : %s\n",
-                             "Pin Name : %s\n",
-                             "Pin Num  : %s\n",
-                             "Value    : %s\n"}
-                             , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
-                             , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_rd_data)
-    ), UVM_LOW);
+    if (_print_info) begin
+      `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Get OP:\n",
+                               "-------------------------------------------------\n",
+                               "OP Type  : %s\n",
+                               "Pin Name : %s\n",
+                               "Pin Num  : %s\n",
+                               "Value    : %s\n"}
+                               , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                               , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_rd_data)
+      ), UVM_LOW);
+    end
 
   endtask : getPin
+
+  //----------------------------------------------------------------------------
+
+  // read specified DUT pin values
+  task automatic getCompare(
+    input  uvm_sequencer_base _sqcr,
+    input  op_type_t          _op_type,               // same as for getPin task
+    input  gpio_input_t       _pin_name_i  [] = null,
+    input  gpio_output_t      _pin_name_o  [] = null,
+    input  logic              _user_data_i [],
+    input  logic              _user_data_o [],
+    output bit                _status                 // pass == 1'b1; fail == 1'b0
+  );
+
+    // implement
+    /*
+    string _status = "FAIL";
+
+
+    if (_print_info) begin
+      `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Get OP:\n",
+                               "-------------------------------------------------\n",
+                               "OP Type     : \n",
+                               "Pin Name    : %s\n",
+                               "Pin Num     : %s\n",
+                               "User Values : %s\n"}
+                               "Read Values : %s\n"}
+                               "Status      : %s\n"}
+                               , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                               , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_rd_data)
+      ), UVM_LOW);
+    end
+    */
+  endtask : getCompare;
 
 endpackage : GpioAgentPkg
 

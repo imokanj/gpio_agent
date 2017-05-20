@@ -9,6 +9,7 @@ class GpioItem extends uvm_sequence_item;
 
   // Variables
   rand op_type_t     op_type;
+  rand   bit [31:0]  delay;
 
        logic         gpio_in    [];
   rand logic         gpio_out   [];
@@ -22,6 +23,7 @@ class GpioItem extends uvm_sequence_item;
 
   `uvm_object_utils_begin(GpioItem)
     `uvm_field_enum      (   op_type_t,     op_type, UVM_DEFAULT | UVM_NOPACK)
+    `uvm_field_int       (                    delay, UVM_DEFAULT | UVM_NOPACK)
     `uvm_field_array_int (                  gpio_in, UVM_DEFAULT)
     `uvm_field_array_int (                 gpio_out, UVM_DEFAULT)
     `uvm_field_array_enum( gpio_input_t, pin_name_i, UVM_DEFAULT | UVM_NOPACK)
