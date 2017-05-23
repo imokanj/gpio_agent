@@ -37,6 +37,9 @@ package GpioAgentPkg;
   } gpio_output_t;
   gpio_output_t gpio_output_list;
 
+  // if your simulator does not support built-in functions in constant expressions
+  // please manually count the number of input and output pins and write them here,
+  // and delete the *.num() calls
   parameter W_IN  = gpio_input_list.num();
   parameter W_OUT = gpio_output_list.num();
 
@@ -324,8 +327,8 @@ package GpioAgentPkg;
     input  bit                _print_info = 1'b1,
     input  uvm_sequencer_base _sqcr,
     input  op_type_t          _op_type,
-    input  gpio_input_t       _pin_name_i [] = null,
-    input  gpio_output_t      _pin_name_o [] = null,
+    input  gpio_input_t       _pin_name_i [] = {},
+    input  gpio_output_t      _pin_name_o [] = {},
     output logic              _rd_data    []
   );
 
@@ -391,8 +394,8 @@ package GpioAgentPkg;
   task automatic getCompare(
     input  uvm_sequencer_base _sqcr,
     input  op_type_t          _op_type,               // same as for getPin task
-    input  gpio_input_t       _pin_name_i  [] = null,
-    input  gpio_output_t      _pin_name_o  [] = null,
+    input  gpio_input_t       _pin_name_i  [] = {},
+    input  gpio_output_t      _pin_name_o  [] = {},
     input  logic              _user_data_i [],
     input  logic              _user_data_o [],
     output bit                _status                 // pass == 1'b1; fail == 1'b0
@@ -417,7 +420,7 @@ package GpioAgentPkg;
       ), UVM_LOW);
     end
     */
-  endtask : getCompare;
+  endtask : getCompare
 
 endpackage : GpioAgentPkg
 
