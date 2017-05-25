@@ -407,17 +407,17 @@ package GpioAgentPkg;
     string _status_str         = "PASS";
     logic  _rd_data         [];
     logic  _all_user_values [];
-    
+
     if (_user_data_i.size() == 0 && _user_data_o.size() == 0) begin
        `uvm_error("GPIO_PKG", "\nNo expected pin values specified\n")
        return;
     end
-    
+
     if (_pin_name_i.size() != _user_data_i.size() || _pin_name_o.size() != _user_data_o.size()) begin
       `uvm_error("GPIO_PKG", "\nNumber of specified pin names is different from number of specified values\n")
       return;
     end
-    
+
     getPin(
       ._print_info(1'b0),
       ._sqcr      (_sqcr),
@@ -426,7 +426,7 @@ package GpioAgentPkg;
       ._pin_name_o(_pin_name_o),
       ._rd_data   (_rd_data)
     );
-        
+
     foreach(_user_data_i[i]) begin
       if (_user_data_i[i] != _rd_data[i]) begin
         _status_str = "FAIL";
@@ -442,14 +442,14 @@ package GpioAgentPkg;
         end
       end
     end
-    
-    if (_print_info) begin
-      _all_user_values = new [_user_data_i.size() + _user_data_o.size()] (_user_data_i);
-      foreach(_user_data_o[i]) begin
-        _all_user_values[i + _user_data_i.size()] = _user_data_o[i];
-      end
-      
-      if (_status_str == "PASS") begin
+
+    _all_user_values = new [_user_data_i.size() + _user_data_o.size()] (_user_data_i);
+    foreach(_user_data_o[i]) begin
+      _all_user_values[i + _user_data_i.size()] = _user_data_o[i];
+    end
+
+    if (_status_str == "PASS") begin
+      if (_print_info) begin
         `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Compare OP:\n",
                                          "-------------------------------------------------\n",
                                          "OP Type     : %s\n",
@@ -462,20 +462,20 @@ package GpioAgentPkg;
                                          , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
                                          , printPinVal(_rd_data), _status_str
         ), UVM_LOW);
-      end else begin
-        `uvm_error("GPIO_PKG", $sformatf({"\nGPIO Compare OP:\n",
-                                         "-------------------------------------------------\n",
-                                         "OP Type       : %s\n",
-                                         "Pin Name(s)   : %s\n",
-                                         "Pin Num(s)    : %s\n",
-                                         "User Value(s) : %s\n",
-                                         "Read Value(s) : %s\n",
-                                         "Status        : %s\n"}
-                                         , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
-                                         , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
-                                         , printPinVal(_rd_data), _status_str
-        ));
       end
+    end else begin
+      `uvm_error("GPIO_PKG", $sformatf({"\nGPIO Compare OP:\n",
+                                       "-------------------------------------------------\n",
+                                       "OP Type       : %s\n",
+                                       "Pin Name(s)   : %s\n",
+                                       "Pin Num(s)    : %s\n",
+                                       "User Value(s) : %s\n",
+                                       "Read Value(s) : %s\n",
+                                       "Status        : %s\n"}
+                                       , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                                       , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
+                                       , printPinVal(_rd_data), _status_str
+      ));
     end
 
   endtask : getCompare

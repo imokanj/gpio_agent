@@ -39,12 +39,17 @@ endclass: GpioAgent
   function void GpioAgent::build_phase(uvm_phase phase);
     aport = new("aport", this);
 
-    //get the GPIO agent cfgiguration
+    // get the GPIO agent cfgiguration
     if (!uvm_config_db #(GpioAgentCfg)::get(this, "", "gpio_agent_cfg", cfg)) begin
-      `uvm_fatal("AGT", "Couldn't get the GPIO agent configuration")
+      `uvm_fatal("GPIO_AGT", "Couldn't get the GPIO agent configuration")
     end
 
-    //create agent components
+    // check if the virtual interface reference is populated
+    if (cfg.vif == null) begin
+      `uvm_fatal("GPIO_AGT", "Virtual interface not found")
+    end
+
+    // create agent components
     if (cfg.is_active == UVM_ACTIVE) begin
       sqcr       = uvm_sequencer #(GpioItem)::type_id::create("sequencer", this);
       drv        = GpioDriver               ::type_id::create(   "driver", this);
