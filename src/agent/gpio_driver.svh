@@ -20,7 +20,7 @@ class GpioDriver extends uvm_driver #(GpioItem);
   endfunction
 
   // Function/Task declarations
-  extern virtual function void driveInit();
+  extern virtual task driveInit();
   extern virtual task          driveGpioPins (input GpioItem it, input bit is_sync);
   extern virtual task          driveGpioPinsW(input GpioItem it, input bit is_sync);
   extern virtual task          readGpioPins  (input GpioItem it, output GpioItem rsp, input bit is_sync);
@@ -32,9 +32,10 @@ endclass: GpioDriver
 // Function/Task implementations
 //******************************************************************************
 
-  function void GpioDriver::driveInit();
-    vif.gpio_out = gpio_out_init;
-  endfunction: driveInit
+  task GpioDriver::driveInit();
+    @mp_mas.cb_master;
+    mp_mas.cb_master.gpio_out <= gpio_out_init;
+  endtask: driveInit
 
   //----------------------------------------------------------------------------
 
