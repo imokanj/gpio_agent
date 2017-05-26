@@ -58,8 +58,9 @@ endclass: GpioAgent
       drv.mp_mon = cfg.vif;
     end
 
-    mon    = GpioMonitor::type_id::create("monitor", this);
-    mon.mp = cfg.vif;
+    mon     = GpioMonitor::type_id::create("monitor", this);
+    mon.cfg = cfg;
+    mon.mp  = cfg.vif;
   endfunction: build_phase
 
   //----------------------------------------------------------------------------

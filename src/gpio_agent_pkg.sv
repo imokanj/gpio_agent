@@ -96,11 +96,13 @@ package GpioAgentPkg;
 //******************************************************************************
 
   function automatic GpioAgentCfg configAgent(
-    input uvm_active_passive_enum _is_active
+    input uvm_active_passive_enum _is_active    = UVM_PASSIVE,
+    input bit                     _is_x_z_check = 1'b0
   );
     GpioAgentCfg cfg = GpioAgentCfg::type_id::create("cfg");
 
-    cfg.is_active = _is_active;
+    cfg.is_active    = _is_active;
+    cfg.is_x_z_check = _is_x_z_check;
     return cfg;
   endfunction : configAgent
 
@@ -202,6 +204,33 @@ package GpioAgentPkg;
 
   //----------------------------------------------------------------------------
 
+  function automatic void setXYCheck(
+    input GpioAgent _agt,
+    input bit       _is_x_z_check
+  );
+
+    string _status = "DISABLED";
+
+    if (_agt == null) begin
+      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+      return;
+    end
+
+    if (_is_x_z_check) begin _status = "ENABLED"; end
+
+    _agt.cfg.is_x_z_check = _is_x_z_check;
+
+    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO setXYCheck:\n",
+                             "-------------------------------------------------\n",
+                             "Setting for 'X' and 'Z' checking has changed\n",
+                             "GPIO Agent Path   : %s\n",
+                             "'X' and 'Z' check : %s\n"}
+                             , _agt.get_full_name(), _status
+    ), UVM_LOW);
+  endfunction : setXYCheck
+
+  //----------------------------------------------------------------------------
+
   // write specified values to DUT inputs
   task automatic setPin(
     input  bit                _print_info = 1'b1,
@@ -217,7 +246,7 @@ package GpioAgentPkg;
 
     if (_op_type == WR_SYNC || _op_type == WR_ASYNC) begin
       if (_sqcr == null) begin
-        `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+        `uvm_error("GPIO_PKG", "\nGPIO Agent sequencer handle is NULL\n")
         return;
       end
     end
@@ -282,7 +311,7 @@ package GpioAgentPkg;
   );
 
     if (_sqcr == null) begin
-      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+      `uvm_error("GPIO_PKG", "\nGPIO Agent sequencer handle is NULL\n")
       return;
     end
 
@@ -338,7 +367,7 @@ package GpioAgentPkg;
     GpioGetPinSequence _seq;
 
     if (_sqcr == null) begin
-      `uvm_error("GPIO_PKG", "\nGPIO Agent handle is NULL\n")
+      `uvm_error("GPIO_PKG", "\nGPIO Agent sequencer handle is NULL\n")
       return;
     end
 

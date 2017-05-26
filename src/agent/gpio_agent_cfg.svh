@@ -11,7 +11,8 @@ class GpioAgentCfg extends uvm_object;
   `uvm_object_utils(GpioAgentCfg)
 
   // Variables
-  uvm_active_passive_enum is_active = UVM_PASSIVE;
+  uvm_active_passive_enum is_active    = UVM_PASSIVE;
+  bit                     is_x_z_check = 1'b0;
   virtual GpioIf          vif;
 
   // Constructor
