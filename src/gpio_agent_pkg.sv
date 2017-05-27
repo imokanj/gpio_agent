@@ -95,7 +95,7 @@ package GpioAgentPkg;
 // Functions/Tasks
 //******************************************************************************
 
-  function automatic GpioAgentCfg configAgent(
+  function automatic GpioAgentCfg configGpioAgent(
     input uvm_active_passive_enum _is_active    = UVM_PASSIVE,
     input bit                     _is_x_z_check = 1'b0
   );
@@ -104,7 +104,7 @@ package GpioAgentPkg;
     cfg.is_active    = _is_active;
     cfg.is_x_z_check = _is_x_z_check;
     return cfg;
-  endfunction : configAgent
+  endfunction : configGpioAgent
 
   //----------------------------------------------------------------------------
 
