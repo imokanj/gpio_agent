@@ -39,7 +39,7 @@ endclass: GpioAgent
   function void GpioAgent::build_phase(uvm_phase phase);
     aport = new("aport", this);
 
-    // get the GPIO agent cfgiguration
+    // get the GPIO agent configuration
     if (!uvm_config_db #(GpioAgentCfg)::get(this, "", "gpio_agent_cfg", cfg)) begin
       `uvm_fatal("GPIO_AGT", "Couldn't get the GPIO agent configuration")
     end

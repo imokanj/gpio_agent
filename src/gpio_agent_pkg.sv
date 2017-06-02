@@ -204,7 +204,7 @@ package GpioAgentPkg;
 
   //----------------------------------------------------------------------------
 
-  function automatic void setXYCheck(
+  function automatic void setXZCheck(
     input GpioAgent _agt,
     input bit       _is_x_z_check
   );
@@ -220,14 +220,14 @@ package GpioAgentPkg;
 
     _agt.cfg.is_x_z_check = _is_x_z_check;
 
-    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO setXYCheck:\n",
+    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO setXZCheck:\n",
                              "-------------------------------------------------\n",
                              "Setting for 'X' and 'Z' checking has changed\n",
                              "GPIO Agent Path   : %s\n",
                              "'X' and 'Z' check : %s\n"}
                              , _agt.get_full_name(), _status
     ), UVM_LOW);
-  endfunction : setXYCheck
+  endfunction : setXZCheck
 
   //----------------------------------------------------------------------------
 
@@ -285,9 +285,9 @@ package GpioAgentPkg;
       `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Set OP:\n",
                                "-------------------------------------------------\n",
                                "OP Type     : %s\n",
-                               "Pin Name    : %s\n",
-                               "Pin Num     : %s\n",
-                               "Value       : %s\n"}
+                               "Pin Name(s) : %s\n",
+                               "Pin Num(s)  : %s\n",
+                               "Value(s)    : %s\n"}
                                , _op_type.name(), printPinEnumO(_pin_name_o, 0), printPinEnumO(_pin_name_o, 1), printPinVal(_wr_data)
       ), UVM_LOW);
     end
@@ -307,15 +307,17 @@ package GpioAgentPkg;
     input  logic              _wr_data_start [],
     input  logic              _wr_data_end   [],
     input  bit [31:0]         _delay    = 0,
-    input  bit [31:0]         _duration = 0
+    input  bit [31:0]         _duration = 1
   );
+
+    string _dur_type;
 
     if (_sqcr == null) begin
       `uvm_error("GPIO_PKG", "\nGPIO Agent sequencer handle is NULL\n")
       return;
     end
 
-    if (_op_type != WR_WIN_SYNC && _op_type != WR_WIN_SYNC) begin
+    if (_op_type != WR_WIN_SYNC && _op_type != WR_WIN_ASYNC) begin
       `uvm_error("GPIO_PKG", "\nWrong OP for this setPinWindow task\n")
       return;
     end
@@ -325,10 +327,35 @@ package GpioAgentPkg;
       return;
     end
 
-    if (_op_type == WR_WIN_ASYNC) begin
-      if (_duration == 0) begin
-        _duration = 1; // minimum duration for asynchronous window write is 1 ns
+    // duration cannot be less than 1 clock cycle or 1 ns
+    if (_duration < 1) begin
+      `uvm_warning("GPIO_PKG", {"\nMinimum duration is 1 clock cycle or 1 ns",
+                                "\nParameter _duration automatically set to 1\n"}
+      )
+      _duration = 1;
+    end
+
+    if (_print_info) begin
+      if (_op_type == WR_WIN_SYNC) begin
+        _dur_type = "clock(s)";
+      end else begin
+        _dur_type = "ns";
       end
+
+      `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Window OP:\n",
+                               "-------------------------------------------------\n",
+                               "OP Type        : %s\n",
+                               "Pin Name(s)    : %s\n",
+                               "Pin Num(s)     : %s\n",
+                               "Delay          : %0d %s\n",
+                               "Start Value(s) : %s\n",
+                               "Duration       : %0d %s\n",
+                               "End Value(s)   : %s\n"}
+                               , _op_type.name(), printPinEnumO(_pin_name_o, 0)
+                               , printPinEnumO(_pin_name_o, 1), _delay, _dur_type
+                               , printPinVal(_wr_data_start), _duration,_dur_type
+                               , printPinVal(_wr_data_end)
+      ), UVM_LOW);
     end
 
     setPin(
@@ -409,10 +436,10 @@ package GpioAgentPkg;
     if (_print_info) begin
       `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Get OP:\n",
                                "-------------------------------------------------\n",
-                               "OP Type  : %s\n",
-                               "Pin Name : %s\n",
-                               "Pin Num  : %s\n",
-                               "Value    : %s\n"}
+                               "OP Type     : %s\n",
+                               "Pin Name(s) : %s\n",
+                               "Pin Num(s)  : %s\n",
+                               "Value(s)    : %s\n"}
                                , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
                                , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_rd_data)
       ), UVM_LOW);
@@ -481,12 +508,12 @@ package GpioAgentPkg;
       if (_print_info) begin
         `uvm_info("GPIO_PKG", $sformatf({"\nGPIO Compare OP:\n",
                                          "-------------------------------------------------\n",
-                                         "OP Type     : %s\n",
-                                         "Pin Name    : %s\n",
-                                         "Pin Num     : %s\n",
-                                         "User Values : %s\n",
-                                         "Read Values : %s\n",
-                                         "Status      : %s\n"}
+                                         "OP Type       : %s\n",
+                                         "Pin Name(s)   : %s\n",
+                                         "Pin Num(s)    : %s\n",
+                                         "User Value(s) : %s\n",
+                                         "Read Value(s) : %s\n",
+                                         "Status        : %s\n"}
                                          , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
                                          , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
                                          , printPinVal(_rd_data), _status_str
