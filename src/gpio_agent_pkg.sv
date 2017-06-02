@@ -204,7 +204,7 @@ package GpioAgentPkg;
 
   //----------------------------------------------------------------------------
 
-  function automatic void setXYCheck(
+  function automatic void setXZCheck(
     input GpioAgent _agt,
     input bit       _is_x_z_check
   );
@@ -220,14 +220,14 @@ package GpioAgentPkg;
 
     _agt.cfg.is_x_z_check = _is_x_z_check;
 
-    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO setXYCheck:\n",
+    `uvm_info("GPIO_PKG", $sformatf({"\nGPIO setXZCheck:\n",
                              "-------------------------------------------------\n",
                              "Setting for 'X' and 'Z' checking has changed\n",
                              "GPIO Agent Path   : %s\n",
                              "'X' and 'Z' check : %s\n"}
                              , _agt.get_full_name(), _status
     ), UVM_LOW);
-  endfunction : setXYCheck
+  endfunction : setXZCheck
 
   //----------------------------------------------------------------------------
 
