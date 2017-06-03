@@ -11,4 +11,4 @@
 
 ![sha3_tb.png](https://s30.postimg.org/bv43kvqu9/this.png)
 
-<p class="western"><em><span style="font-size: 10pt;">Figure &ndash; GPIO agent example use case</span></em><br /><br /><span style="font-size: 12pt;">For additional information please refer to the GPIO agent user manual.</span></p>
+<p class="western"><em>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="font-size: 10pt;">Figure &ndash; GPIO agent example use case</span></em><br /><br /><span style="font-size: 12pt;">For additional information please refer to the GPIO agent user manual.</span></p>
