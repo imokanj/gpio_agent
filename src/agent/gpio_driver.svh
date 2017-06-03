@@ -118,12 +118,12 @@ endclass: GpioDriver
       rsp = null;
 
       case(it.op_type)
-        RD_SYNC      : readGpioPins (it, rsp, 1'b1);
-        RD_ASYNC     : readGpioPins (it, rsp, 1'b0);
-        WR_SYNC      : driveGpioPins(it, 1'b1);
-        WR_ASYNC     : driveGpioPins(it, 1'b0);
-        WR_WIN_SYNC  : begin fork driveGpioPinsW(it, 1'b1); join_none end
-        WR_WIN_ASYNC : begin fork driveGpioPinsW(it, 1'b0); join_none end
+        RD_SYNC      : readGpioPins  (it, rsp, 1'b1);
+        RD_ASYNC     : readGpioPins  (it, rsp, 1'b0);
+        WR_SYNC      : driveGpioPins (it, 1'b1);
+        WR_ASYNC     : driveGpioPins (it, 1'b0);
+        WR_WIN_SYNC  : driveGpioPinsW(it, 1'b1);
+        WR_WIN_ASYNC : driveGpioPinsW(it, 1'b0);
         default      : `uvm_error("GPIO_DRV", "No such operation")
       endcase
 
