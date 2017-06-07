@@ -114,27 +114,37 @@ endclass: GpioDriver
 
     driveInit();
     forever begin
-      seq_item_port.get_next_item(it);
-      rsp = null;
+      
+      @(negedge vif.rst);
+      fork
+        forever begin
+          rsp = null;
+          seq_item_port.get_next_item(it);
 
-      case(it.op_type)
-        RD_SYNC      : readGpioPins  (it, rsp, 1'b1);
-        RD_ASYNC     : readGpioPins  (it, rsp, 1'b0);
-        WR_SYNC      : driveGpioPins (it, 1'b1);
-        WR_ASYNC     : driveGpioPins (it, 1'b0);
-        WR_WIN_SYNC  : driveGpioPinsW(it, 1'b1);
-        WR_WIN_ASYNC : driveGpioPinsW(it, 1'b0);
-        default      : `uvm_error("GPIO_DRV", "No such operation")
-      endcase
+          case(it.op_type)
+            RD_SYNC      : readGpioPins  (it, rsp, 1'b1);
+            RD_ASYNC     : readGpioPins  (it, rsp, 1'b0);
+            WR_SYNC      : driveGpioPins (it, 1'b1);
+            WR_ASYNC     : driveGpioPins (it, 1'b0);
+            WR_WIN_SYNC  : driveGpioPinsW(it, 1'b1);
+            WR_WIN_ASYNC : driveGpioPinsW(it, 1'b0);
+            default      : `uvm_error("GPIO_DRV", "No such operation")
+          endcase
 
-      // get next transaction on rising clk edge
-      // @mp.cb_master;
-      if (rsp == null) begin
-        `uvm_info("GPIO_DRV", "Processed Set Pin OP", UVM_HIGH)
-        seq_item_port.item_done();
-      end else begin
-        `uvm_info("GPIO_DRV", "Processed Get Pin OP", UVM_HIGH)
-         seq_item_port.item_done(rsp);
-      end
+          // get next transaction on rising clk edge
+          // @mp.cb_master;
+          if (rsp == null) begin
+            `uvm_info("GPIO_DRV", "Processed Set Pin OP", UVM_HIGH)
+            seq_item_port.item_done();
+          end else begin
+            `uvm_info("GPIO_DRV", "Processed Get Pin OP", UVM_HIGH)
+             seq_item_port.item_done(rsp);
+          end
+        end
+      join_none
+      
+      @(posedge vif.rst);
+      disable fork;
+        
     end
   endtask: run_phase
