@@ -11,9 +11,9 @@ class GpioAgent extends uvm_agent;
   `uvm_component_param_utils(GpioAgent)
 
   // Components
-  uvm_sequencer #(GpioItem) sqcr;
-  GpioDriver                drv;
-  GpioMonitor               mon;
+  GpioAgentSequencer sqcr;
+  GpioDriver         drv;
+  GpioMonitor        mon;
 
   // Configurations
   GpioAgentCfg cfg;
@@ -27,14 +27,24 @@ class GpioAgent extends uvm_agent;
   endfunction
 
   // Function/Task declarations
-  extern virtual function void build_phase(uvm_phase phase);
+  extern virtual function void handle_reset (uvm_phase phase);
+  extern virtual function void build_phase  (uvm_phase phase);
   extern virtual function void connect_phase(uvm_phase phase);
+  extern virtual task          run_phase    (uvm_phase phase); 
 
 endclass: GpioAgent
 
 //******************************************************************************
 // Function/Task implementations
 //******************************************************************************
+  
+  function void GpioAgent::handle_reset(uvm_phase phase);
+    if (sqcr != null) begin
+      sqcr.handle_reset(phase);
+    end
+  endfunction : handle_reset
+
+  //----------------------------------------------------------------------------
 
   function void GpioAgent::build_phase(uvm_phase phase);
     aport = new("aport", this);
@@ -51,8 +61,8 @@ endclass: GpioAgent
 
     // create agent components
     if (cfg.is_active == UVM_ACTIVE) begin
-      sqcr       = uvm_sequencer #(GpioItem)::type_id::create("sequencer", this);
-      drv        = GpioDriver               ::type_id::create(   "driver", this);
+      sqcr       = GpioAgentSequencer::type_id::create("sequencer", this);
+      drv        = GpioDriver        ::type_id::create(   "driver", this);
       drv.vif    = cfg.vif;
       drv.mp_mas = cfg.vif;
       drv.mp_mon = cfg.vif;
@@ -71,3 +81,13 @@ endclass: GpioAgent
     end
     mon.aport.connect(aport);
   endfunction: connect_phase
+  
+  //----------------------------------------------------------------------------
+
+  task GpioAgent::run_phase(uvm_phase phase);
+    forever begin
+      @(posedge cfg.vif.rst);
+      handle_reset(phase);
+      @(negedge cfg.vif.rst);
+    end
+  endtask

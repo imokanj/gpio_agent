@@ -10,7 +10,8 @@
  */
 
 interface GpioIf(
-  input logic clk
+  input logic clk,
+  input logic rst
 );
 
   timeunit        1ns;
@@ -45,9 +46,9 @@ interface GpioIf(
 //******************************************************************************
 
   // GPIO Master modport
-  modport mp_master (input clk, clocking cb_master);
+  modport mp_master (input clk, input rst, clocking cb_master);
 
   // GPIO Monitor modport
-  modport mp_monitor(input clk, clocking cb_monitor);
+  modport mp_monitor(input clk, input rst, clocking cb_monitor);
 
 endinterface : GpioIf

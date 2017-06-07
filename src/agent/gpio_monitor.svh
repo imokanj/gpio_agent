@@ -85,13 +85,23 @@ endclass: GpioMonitor
     it.gpio_out = new [W_OUT];
 
     forever begin
-      readPins(it);
+    
+      @(negedge mp.rst);
+      fork
+        forever begin
+          readPins(it);
 
-      // perform checking for 'X' and 'Z' values
-      if (cfg.is_x_z_check) begin
-        checkXZ(it);
-      end
+          // perform checking for 'X' and 'Z' values
+          if (cfg.is_x_z_check) begin
+            checkXZ(it);
+          end
       
-      aport.write(GpioItem'(it.clone()));
+          aport.write(GpioItem'(it.clone()));
+        end
+      join_none
+      
+      @(posedge mp.rst);
+      disable fork;
+      
     end
   endtask: run_phase

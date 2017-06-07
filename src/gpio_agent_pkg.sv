@@ -87,6 +87,7 @@ package GpioAgentPkg;
 
   // components
   `include "agent/gpio_agent_cfg.svh"
+  `include "agent/gpio_sequencer.svh"
   `include "agent/gpio_driver.svh"
   `include "agent/gpio_monitor.svh"
   `include "agent/gpio_agent.svh"
