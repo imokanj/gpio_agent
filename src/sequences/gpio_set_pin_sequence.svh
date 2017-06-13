@@ -39,6 +39,6 @@ endclass: GpioSetPinSequence
         gpio_out[i]     == local::gpio_out[i];
       op_type           == local::op_type;
       delay             == local::delay;
-    }) `uvm_error("GPIO_SET_SQNC", "\nRandomization failed\n");
+    }) `uvm_error("GPIO_SET_SQNC", "\nRandomization failed\n")
     finish_item(it);
   endtask: body

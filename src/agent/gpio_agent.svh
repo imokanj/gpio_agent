@@ -50,7 +50,7 @@ endclass: GpioAgent
     aport = new("aport", this);
 
     // get the GPIO agent configuration
-    if (!uvm_config_db #(GpioAgentCfg)::get(this, "", "gpio_agent_cfg", cfg)) begin
+    if (!uvm_config_db #(GpioAgentCfg)::get(this, "", "gpio_agent_cfg_db", cfg)) begin
       `uvm_fatal("GPIO_AGT", "Couldn't get the GPIO agent configuration")
     end
 
