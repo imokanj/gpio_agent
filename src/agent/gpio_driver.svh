@@ -145,6 +145,7 @@ endclass: GpioDriver
       
       @(posedge vif.rst);
       disable fork;
+      driveInit();
         
     end
   endtask: run_phase
