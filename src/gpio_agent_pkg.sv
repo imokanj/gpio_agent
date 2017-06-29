@@ -18,7 +18,7 @@
 package GpioAgentPkg;
 
   timeunit        1ns;
-  timeprecision 100ps; 
+  timeprecision 100ps;
 
 //==============================================================================
 // System section
@@ -80,55 +80,31 @@ package GpioAgentPkg;
 
   //----------------------------------------------------------------------------
 
-  function automatic string printPinEnumO(gpio_output_t a [], bit is_val);
-    parameter DIGITS = "9876543210";
-    string    str    = "";
-    int       tmp;
+  class PrintEnum #(type T = gpio_input_t);
+    static function automatic string printPinEnum(T a [], bit is_val);
+      parameter DIGITS = "9876543210";
+      string    str    = "";
+      int       tmp;
 
-    tmp = a.size();
-    foreach(a[i]) begin
-      if (!is_val) begin
-        if (i != tmp-1) begin
-          str = {str, a[i].name(), ", "};
+      tmp = a.size();
+      foreach(a[i]) begin
+        if (!is_val) begin
+          if (i != tmp-1) begin
+            str = {str, a[i].name(), ", "};
+          end else begin
+            str = {str, a[i].name()};
+          end
         end else begin
-          str = {str, a[i].name()};
-        end
-      end else begin
-        if (i != tmp-1) begin
-          str = {str, DIGITS[a[i]*8+:8], ", "};
-        end else begin
-          str = {str, DIGITS[a[i]*8+:8]};
-        end
-      end
-    end
-    return str;
-  endfunction : printPinEnumO
-
-  //----------------------------------------------------------------------------
-
-  function automatic string printPinEnumI(gpio_input_t a [], bit is_val);
-    parameter DIGITS = "9876543210";
-    string    str    = "";
-    int       tmp;
-
-    tmp = a.size();
-    foreach(a[i]) begin
-      if (!is_val) begin
-        if (i != tmp-1) begin
-          str = {str, a[i].name(), ", "};
-        end else begin
-          str = {str, a[i].name()};
-        end
-      end else begin
-        if (i != tmp-1) begin
-          str = {str, DIGITS[a[i]*8+:8], ", "};
-        end else begin
-          str = {str, DIGITS[a[i]*8+:8]};
+          if (i != tmp-1) begin
+            str = {str, DIGITS[a[i]*8+:8], ", "};
+          end else begin
+            str = {str, DIGITS[a[i]*8+:8]};
+          end
         end
       end
-    end
-    return str;
-  endfunction : printPinEnumI
+      return str;
+    endfunction : printPinEnum
+  endclass : PrintEnum
 
   //----------------------------------------------------------------------------
 
@@ -140,14 +116,14 @@ package GpioAgentPkg;
     string    str    = "";
 
     if (a.size() != 0) begin
-      str = printPinEnumI(a, is_val);
+      str = PrintEnum #(gpio_input_t)::printPinEnum(a, is_val);
       if (b.size() != 0) begin
         str = {str, ", "};
       end
     end
 
     if (b.size() != 0) begin
-      str = {str, printPinEnumO(b, is_val)};
+      str = {str, PrintEnum #(gpio_output_t)::printPinEnum(b, is_val)};
     end
 
     return str;
@@ -238,7 +214,7 @@ package GpioAgentPkg;
                                 "is greater than number of actual pins, or is less than one\n"})
         return;
       end
-      
+
       if (_pin_name_o.size() != _wr_data.size()) begin
         `uvm_error("GPIO_PKG", "\nNumber of specified pin names is different than number of specified values\n")
         return;
@@ -266,7 +242,10 @@ package GpioAgentPkg;
                                "Pin Name(s) : %s\n",
                                "Pin Num(s)  : %s\n",
                                "Value(s)    : %s\n"}
-                               , _op_type.name(), printPinEnumO(_pin_name_o, 0), printPinEnumO(_pin_name_o, 1), printPinVal(_wr_data)
+                               , _op_type.name()
+                               , PrintEnum #(gpio_output_t)::printPinEnum(_pin_name_o, 0)
+                               , PrintEnum #(gpio_output_t)::printPinEnum(_pin_name_o, 1)
+                               , printPinVal(_wr_data)
       ), UVM_LOW)
     end
 
@@ -299,7 +278,7 @@ package GpioAgentPkg;
       `uvm_error("GPIO_PKG", "\nWrong OP for this setPinWindow task\n")
       return;
     end
-    
+
     if (_pin_name_o.size() > W_OUT || _pin_name_o.size() < 1) begin
       `uvm_error("GPIO_PKG", {"\nOperation ignored.\nNumber of specified pins ",
                               "is greater than number of actual pins, or is less than one\n"})
@@ -335,9 +314,11 @@ package GpioAgentPkg;
                                "Start Value(s) : %s\n",
                                "Duration       : %0d %s\n",
                                "End Value(s)   : %s\n"}
-                               , _op_type.name(), printPinEnumO(_pin_name_o, 0)
-                               , printPinEnumO(_pin_name_o, 1), _delay, _dur_type
-                               , printPinVal(_wr_data_start), _duration,_dur_type
+                               , _op_type.name()
+                               , PrintEnum #(gpio_output_t)::printPinEnum(_pin_name_o, 0)
+                               , PrintEnum #(gpio_output_t)::printPinEnum(_pin_name_o, 1)
+                               , _delay, _dur_type
+                               , printPinVal(_wr_data_start), _duration, _dur_type
                                , printPinVal(_wr_data_end)
       ), UVM_LOW)
     end
@@ -381,7 +362,7 @@ package GpioAgentPkg;
       `uvm_error("GPIO_PKG", "\nGPIO Agent sequencer handle is NULL\n")
       return;
     end
-    
+
     if (_pin_name_i.size() > W_IN) begin
       `uvm_error("GPIO_PKG", {"\nOperation ignored.Number of specified input pins ",
                               "is greater than number of actual input pins\n"})
@@ -436,8 +417,10 @@ package GpioAgentPkg;
                                "Pin Name(s) : %s\n",
                                "Pin Num(s)  : %s\n",
                                "Value(s)    : %s\n"}
-                               , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
-                               , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_rd_data)
+                               , _op_type.name()
+                               , printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                               , printPinEnumIO(_pin_name_i, _pin_name_o, 1)
+                               , printPinVal(_rd_data)
       ), UVM_LOW)
     end
 
@@ -510,8 +493,10 @@ package GpioAgentPkg;
                                          "User Value(s) : %s\n",
                                          "Read Value(s) : %s\n",
                                          "Status        : %s\n"}
-                                         , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
-                                         , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
+                                         , _op_type.name()
+                                         , printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                                         , printPinEnumIO(_pin_name_i, _pin_name_o, 1)
+                                         , printPinVal(_all_user_values)
                                          , printPinVal(_rd_data), _status_str
         ), UVM_LOW)
       end
@@ -524,8 +509,10 @@ package GpioAgentPkg;
                                        "User Value(s) : %s\n",
                                        "Read Value(s) : %s\n",
                                        "Status        : %s\n"}
-                                       , _op_type.name(), printPinEnumIO(_pin_name_i, _pin_name_o, 0)
-                                       , printPinEnumIO(_pin_name_i, _pin_name_o, 1), printPinVal(_all_user_values)
+                                       , _op_type.name()
+                                       , printPinEnumIO(_pin_name_i, _pin_name_o, 0)
+                                       , printPinEnumIO(_pin_name_i, _pin_name_o, 1)
+                                       , printPinVal(_all_user_values)
                                        , printPinVal(_rd_data), _status_str
       ))
     end
